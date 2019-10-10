@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="JumpKitTask" extends="Task">
+  <interface>
+  	<field id="mParticleApiCall" type="assocarray"/>
+  	<field id="mParticleIdentityResult" type="assocarray"/>
+  	<field id="mParticleCurrentUser" type="assocarray"/>
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/JumpKitTask.brs"/>
+  <script type="text/brightscript" uri="pkg:/source/libs/JumpKit.brs"/>
+</component>
