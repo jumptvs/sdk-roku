@@ -315,7 +315,7 @@ function JumpKitConstants() as Object
         "cancellation": 1004,
         ' Profile selection event.
         "choseUserProfile": 1005
-      }.
+      },
 
       ' Application event type. (emitted automatically)
       "application": {
@@ -613,7 +613,7 @@ function JumpKit() as Object
   end if
 
   config = {
-    version: "1.0.1",
+    version: "1.0.2",
     urlInsightsAPI: "https://jdkapi.jumptvs.com/v1/production/events",
     appKey: "",
     port: createObject("roMessagePort"),
