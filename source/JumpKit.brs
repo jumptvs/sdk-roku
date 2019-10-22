@@ -315,7 +315,7 @@ function JumpKitConstants() as Object
         "cancellation": 1004,
         ' Profile selection event.
         "choseUserProfile": 1005
-      }.
+      },
 
       ' Application event type. (emitted automatically)
       "application": {
