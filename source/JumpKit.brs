@@ -853,6 +853,8 @@ function JumpKit() as Object
             constants = JumpKitConstants()
             contextInformation = jumpKitPlayerContext({}, m._tracking.playbackSession, m.currentVideoPlayer)
 
+            contextData = invalid
+            jumpKitSendPlaybackIntervalIfNeeded(constants.insights.categories.player, constants.insights.events.player.playbackInterval, m._playbackIntervalBenchmarkStop(), contextData, m._tracking.playbackSession, m.currentVideoPlayer)
             m.track(constants.insights.categories.player, constants.insights.events.player.playerExit, contextInformation)
           end if
 
