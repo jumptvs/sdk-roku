@@ -497,17 +497,10 @@ function JumpKitUtilities()
     
     unixTime: function() as longinteger
       time = CreateObject("roDateTime")
-      timestamp = time.AsSeconds()
-      ms = time.GetMilliseconds()
-      timestampString = timestamp.ToStr() + ms.ToStr()
 
-      low = timestampString.Mid(timestampString.Len() - 9, 9).ToInt()
-      high = timestampString.Mid(0, timestampString.Len() - 9).ToInt()
-      milliseconds# = high
-      milliseconds# = milliseconds# * 1000000000
-      milliseconds# = milliseconds# + low
+      milliseconds = time.AsSeconds() * 1000& + time.getMilliseconds()
 
-      return milliseconds#
+      return milliseconds
     end function
 
     isEmpty: function(input as dynamic) as boolean
