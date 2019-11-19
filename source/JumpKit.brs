@@ -613,7 +613,7 @@ function JumpKit() as Object
   end if
 
   config = {
-    version: "1.0.2",
+    version: "1.0.3",
     urlInsightsAPI: "https://jdkapi.jumptvs.com/v1/production/events",
     appKey: "",
     port: createObject("roMessagePort"),
