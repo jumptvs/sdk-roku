@@ -137,16 +137,16 @@ function JumpKitShemas() as Object
       {
         name: "contentId", required: true, type: "string"
       }
-			{
+      {
         name: "currentTime", required: true, type: "integer"
       }
-			{
+      {
         name: "totalTime", required: true, type: "integer"
       }
-			{
+      {
         name: "playerType", required: true, type: "integer"
       }
-			{
+      {
         name: "contextData", required: false, type: "object", fields: [
           {
             name: "playerInterval", required: false, type: "integer"
@@ -968,9 +968,8 @@ sub jumpKitPlayerOnStateChange()
       end if
     else if state = "paused"
       insights._playbackBufferingBenchmarkStop()
-
-      insights.track(categoryType, constants.insights.events.player.playbackPaused, jumpKitPlayerContext(contextData, playbackSession, video))
       jumpKitSendPlaybackIntervalIfNeeded(categoryType, constants.insights.events.player.playbackInterval, insights._playbackIntervalBenchmarkStop(), contextData, playbackSession, video)
+      insights.track(categoryType, constants.insights.events.player.playbackPaused, jumpKitPlayerContext(contextData, playbackSession, video))
     else if state = "error"
       insights.track(categoryType, constants.insights.events.player.playbackError, jumpKitPlayerContext(contextData, playbackSession, video))
       jumpKitSendPlaybackIntervalIfNeeded(categoryType, constants.insights.events.player.playbackInterval, insights._playbackIntervalBenchmarkStop(), contextData, playbackSession, video)
