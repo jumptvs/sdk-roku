@@ -137,16 +137,16 @@ function JumpKitShemas() as Object
       {
         name: "contentId", required: true, type: "string"
       }
-			{
+      {
         name: "currentTime", required: true, type: "integer"
       }
-			{
+      {
         name: "totalTime", required: true, type: "integer"
       }
-			{
+      {
         name: "playerType", required: true, type: "integer"
       }
-			{
+      {
         name: "contextData", required: false, type: "object", fields: [
           {
             name: "playerInterval", required: false, type: "integer"
@@ -497,17 +497,10 @@ function JumpKitUtilities()
     
     unixTime: function() as longinteger
       time = CreateObject("roDateTime")
-      timestamp = time.AsSeconds()
-      ms = time.GetMilliseconds()
-      timestampString = timestamp.ToStr() + ms.ToStr()
 
-      low = timestampString.Mid(timestampString.Len() - 9, 9).ToInt()
-      high = timestampString.Mid(0, timestampString.Len() - 9).ToInt()
-      milliseconds# = high
-      milliseconds# = milliseconds# * 1000000000
-      milliseconds# = milliseconds# + low
+      milliseconds = time.AsSeconds() * 1000& + time.getMilliseconds()
 
-      return milliseconds#
+      return milliseconds
     end function
 
     isEmpty: function(input as dynamic) as boolean
@@ -613,7 +606,7 @@ function JumpKit() as Object
   end if
 
   config = {
-    version: "1.0.3",
+    version: "1.0.4",
     urlInsightsAPI: "https://jdkapi.jumptvs.com/v1/production/events",
     appKey: "",
     port: createObject("roMessagePort"),
@@ -975,9 +968,8 @@ sub jumpKitPlayerOnStateChange()
       end if
     else if state = "paused"
       insights._playbackBufferingBenchmarkStop()
-
-      insights.track(categoryType, constants.insights.events.player.playbackPaused, jumpKitPlayerContext(contextData, playbackSession, video))
       jumpKitSendPlaybackIntervalIfNeeded(categoryType, constants.insights.events.player.playbackInterval, insights._playbackIntervalBenchmarkStop(), contextData, playbackSession, video)
+      insights.track(categoryType, constants.insights.events.player.playbackPaused, jumpKitPlayerContext(contextData, playbackSession, video))
     else if state = "error"
       insights.track(categoryType, constants.insights.events.player.playbackError, jumpKitPlayerContext(contextData, playbackSession, video))
       jumpKitSendPlaybackIntervalIfNeeded(categoryType, constants.insights.events.player.playbackInterval, insights._playbackIntervalBenchmarkStop(), contextData, playbackSession, video)
