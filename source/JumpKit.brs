@@ -137,16 +137,16 @@ function JumpKitShemas() as Object
       {
         name: "contentId", required: true, type: "string"
       }
-      {
+			{
         name: "currentTime", required: true, type: "integer"
       }
-      {
+			{
         name: "totalTime", required: true, type: "integer"
       }
-      {
+			{
         name: "playerType", required: true, type: "integer"
       }
-      {
+			{
         name: "contextData", required: false, type: "object", fields: [
           {
             name: "playerInterval", required: false, type: "integer"
@@ -606,7 +606,7 @@ function JumpKit() as Object
   end if
 
   config = {
-    version: "1.0.4",
+    version: "1.0.5",
     urlInsightsAPI: "https://jdkapi.jumptvs.com/v1/production/events",
     appKey: "",
     port: createObject("roMessagePort"),
@@ -681,10 +681,17 @@ function JumpKit() as Object
     startWithAppKey: sub(appKey as string)
       internal = JumpKitInstance()._internal
 
-      internal.config.appKey = appKey
-      internal.storage.add(internal.storage.keys.APP_KEY, appKey)
-
       internal.logger.info("Welcome Jump Kit SDK V" + internal.config.version)
+      
+      internal.config.appKey = appKey
+
+      if Len(internal.storage.get(internal.storage.keys.APP_KEY)) = 0
+        constants = JumpKitConstants()
+        insights = JumpKitInstance().insights
+        insights.track(constants.insights.categories.application, constants.insights.events.application.started, {})
+      end if
+
+      internal.storage.add(internal.storage.keys.APP_KEY, appKey)
     End Sub
 
     getInstallationId: function() as Dynamic
@@ -755,7 +762,7 @@ function JumpKit() as Object
             userType: "anonymous"
           }
 
-          internal.storage.add(internal.storage.keys.INSIGHTS_USER_INFO, FormatJSON(user))
+          internal.storage.add(internal.storage.keys.INSIGHTS_USER_INFO, FormatJSON(m._userInfo))
 
           return true
         end if
@@ -911,9 +918,6 @@ function JumpKit() as Object
     
     config.debugMode = storage.get(storage.keys.DEBUG_MODE)
   else
-    constants = JumpKitConstants()
-    public.insights.track(constants.insights.categories.application, constants.insights.events.application.started, {})
-    
     storage.destroy(storage.keys.APP_KEY)
     storage.destroy(storage.keys.INSIGHTS_USER_INFO)
     storage.add(storage.keys.DEBUG_MODE, "false")
