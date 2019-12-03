@@ -606,7 +606,7 @@ function JumpKit() as Object
   end if
 
   config = {
-    version: "1.0.5",
+    version: "1.0.6",
     urlInsightsAPI: "https://jdkapi.jumptvs.com/v1/production/events",
     appKey: "",
     port: createObject("roMessagePort"),
@@ -715,15 +715,15 @@ function JumpKit() as Object
 
     insights: {
       _tracking: {
-        playbackStartTime: 0
+        "playbackStartTime": 0
       }
 
       _contentInfo: {
-        contentId: "unknown"
+        "contentId": "unknown"
       }
 
       _userInfo: {
-        userType: "anonymous"
+        "userType": "anonymous"
       }
 
       _playbackIntervalBenchmarkInit: sub()
@@ -759,7 +759,7 @@ function JumpKit() as Object
 
         if userInfo = invalid
           m._userInfo = {
-            userType: "anonymous"
+            "userType": "anonymous"
           }
 
           internal.storage.add(internal.storage.keys.INSIGHTS_USER_INFO, FormatJSON(m._userInfo))
@@ -793,9 +793,9 @@ function JumpKit() as Object
         constants = JumpKitConstants()
 
         eventToSend = {
-          event: eventType,
-          category: categoryType,
-          metadata: {
+          "event": eventType,
+          "category": categoryType,
+          "metadata": {
             "JUMP-APP-KEY": internal.config.appKey,
             "dateTime": internal.utilities.unixTime(),
             "eventType": constants.insights.eventTypes.manual,
@@ -826,7 +826,7 @@ function JumpKit() as Object
           internal.logger.error(checkResult)
 
           m._contentInfo = {
-            contentId: "unknown"
+            "contentId": "unknown"
           }
         end if
       end sub
@@ -854,7 +854,7 @@ function JumpKit() as Object
             m.track(constants.insights.categories.player, constants.insights.events.player.playerExit, contextInformation)
           
             m._contentInfo = {
-              contentId: "unknown"
+              "contentId": "unknown"
             }
 
           end if
@@ -863,7 +863,7 @@ function JumpKit() as Object
         end if
 
         m._tracking = {
-          playbackStartTime: 0
+          "playbackStartTime": 0
         }
 
         roDeviceInfo = CreateObject("roDeviceInfo")
