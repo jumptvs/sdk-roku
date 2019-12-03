@@ -841,10 +841,6 @@ function JumpKit() as Object
 
         if videoPlayer = invalid
 
-          m._contentInfo = {
-            contentId: "unknown"
-          }
-
           if m._tracking.playbackSession <> invalid
 
             m.currentVideoPlayer.unobserveField("state")
