@@ -606,7 +606,7 @@ function JumpKit() as Object
   end if
 
   config = {
-    version: "1.0.6",
+    version: "1.0.7",
     urlInsightsAPI: "https://jdkapi.jumptvs.com/v1/production/events",
     appKey: "",
     port: createObject("roMessagePort"),
@@ -732,9 +732,13 @@ function JumpKit() as Object
       end sub
 
       _playbackIntervalBenchmarkStop: function()
-        date = CreateObject("roDateTime")
-        seconds = date.asSeconds() - m._tracking.playbackStartTime
+        seconds = 0
 
+        if m._tracking.playbackStartTime > 0
+          date = CreateObject("roDateTime")
+          seconds = date.asSeconds() - m._tracking.playbackStartTime
+        end if
+        
         m._tracking.playbackStartTime = 0
 
         return seconds
@@ -746,8 +750,12 @@ function JumpKit() as Object
       end sub
 
       _playbackBufferingBenchmarkStop: function()
-        date = CreateObject("roDateTime")
-        seconds = date.asSeconds() - m._tracking.bufferingStartTime
+        seconds = 0
+
+        if m._tracking.bufferingStartTime > 0
+          date = CreateObject("roDateTime")
+          seconds = date.asSeconds() - m._tracking.bufferingStartTime
+        end if
 
         m._tracking.bufferingStartTime = 0
 
@@ -852,11 +860,10 @@ function JumpKit() as Object
             contextData = invalid
             jumpKitSendPlaybackIntervalIfNeeded(constants.insights.categories.player, constants.insights.events.player.playbackInterval, m._playbackIntervalBenchmarkStop(), contextData, m._tracking.playbackSession, m.currentVideoPlayer)
             m.track(constants.insights.categories.player, constants.insights.events.player.playerExit, contextInformation)
-          
+
             m._contentInfo = {
               "contentId": "unknown"
             }
-
           end if
 
           return
@@ -879,7 +886,7 @@ function JumpKit() as Object
   
   internalApi = {
     models: {
-      deviceInfo: function() as object
+      "deviceInfo": function() as object
         internal = JumpKitInstance()._internal
 
         roDeviceInfo = CreateObject("roDeviceInfo")
@@ -968,8 +975,6 @@ sub jumpKitPlayerOnStateChange()
         eventType = constants.insights.events.player.playbackStarted
         eventContextInformation = jumpKitPlayerContext(contextData, playbackSession, video)
         insights.track(categoryType, eventType, eventContextInformation)
-      else
-        return 
       end if
     else if state = "paused"
       insights._playbackBufferingBenchmarkStop()
