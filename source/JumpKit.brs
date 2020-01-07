@@ -867,7 +867,7 @@ function JumpKit() as Object
 
         roDeviceInfo = CreateObject("roDeviceInfo")
 
-        videoPlayer.observeField("state", "jumpKitPlayerOnStateChange")
+        videoPlayer.observeFieldScoped("state", "jumpKitPlayerOnStateChange")
         videoPlayer.notificationInterval = 1
 
         m.currentVideoPlayer = videoPlayer
