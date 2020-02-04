@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="IntervalTask" extends="Task">
+  <interface>
+    <field id="startTime" type="integer"/>
+    <field id="eventContextInformation" type="roassociativearray"/>
+    <field id="videoPlayer" type="node"/>
+    <field id="playbackSession" type="string"/>
+    <field id="isPaused" type="boolean"/>
+
+    <field id="mParticleApiCall" type="assocarray"/>
+  	<field id="mParticleIdentityResult" type="assocarray"/>
+  	<field id="mParticleCurrentUser" type="assocarray"/>
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/IntervalTask.brs" />
+  <script type="text/brightscript" uri="pkg:/source/libs/JumpKit.brs" />
+</component>

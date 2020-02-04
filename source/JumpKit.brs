@@ -726,6 +726,10 @@ function JumpKit() as Object
         "userType": "anonymous"
       }
 
+      _playbackVariables: {
+        "isPaused": false
+      }
+
       _playbackIntervalBenchmarkInit: sub()
         date = CreateObject("roDateTime")
         m._tracking.playbackStartTime = date.asSeconds()
@@ -858,6 +862,8 @@ function JumpKit() as Object
             contextInformation = jumpKitPlayerContext({}, m._tracking.playbackSession, m.currentVideoPlayer)
 
             contextData = invalid
+
+            setNodeField(m._tracking.intervalTask, "control", "string", "stop", false) ' stop interval task
             jumpKitSendPlaybackIntervalIfNeeded(constants.insights.categories.player, constants.insights.events.player.playbackInterval, m._playbackIntervalBenchmarkStop(), contextData, m._tracking.playbackSession, m.currentVideoPlayer)
             m.track(constants.insights.categories.player, constants.insights.events.player.playerExit, contextInformation)
 
@@ -967,6 +973,7 @@ sub jumpKitPlayerOnStateChange()
       end if
 
       insights._playbackIntervalBenchmarkInit()
+      insights._playbackVariables.isPaused = false
 
       if insights._tracking.reportedPlaybackStarted = invalid then
 
@@ -974,9 +981,27 @@ sub jumpKitPlayerOnStateChange()
 
         eventType = constants.insights.events.player.playbackStarted
         eventContextInformation = jumpKitPlayerContext(contextData, playbackSession, video)
+
+        ' Starts the node's task that track and send interval playback time
+        insights._tracking.intervalTask = createObject("roSGNode", "IntervalTask")
+
+        ' Set node's fields
+        setNodeField(insights._tracking.intervalTask, "videoPlayer", LCase(Type(video)), m.video, false)
+        setNodeField(insights._tracking.intervalTask, "playbackSession", "string", playbackSession, false)
+        setNodeField(insights._tracking.intervalTask, "eventContextInformation", LCase(Type(eventContextInformation)), eventContextInformation, false)
+
+        insights._tracking.intervalTask.observeField("startTime", "onNodeFieldChange") ' notified when node's task change playback start time
+
         insights.track(categoryType, eventType, eventContextInformation)
       end if
+
+      ' Update node fields that changes according the reproduction
+      setNodeField(insights._tracking.intervalTask, "startTime", LCase(Type(insights._tracking.playbackStartTime)), insights._tracking.playbackStartTime, false)
+      setNodeField(insights._tracking.intervalTask, "isPaused", LCase(Type(insights._playbackVariables.isPaused)), insights._playbackVariables.isPaused, false)
     else if state = "paused"
+      insights._playbackVariables.isPaused = true
+      setNodeField(insights._tracking.intervalTask, "isPaused", LCase(Type(insights._playbackVariables.isPaused)), insights._playbackVariables.isPaused, false)
+
       insights._playbackBufferingBenchmarkStop()
       jumpKitSendPlaybackIntervalIfNeeded(categoryType, constants.insights.events.player.playbackInterval, insights._playbackIntervalBenchmarkStop(), contextData, playbackSession, video)
       insights.track(categoryType, constants.insights.events.player.playbackPaused, jumpKitPlayerContext(contextData, playbackSession, video))
@@ -985,8 +1010,10 @@ sub jumpKitPlayerOnStateChange()
       jumpKitSendPlaybackIntervalIfNeeded(categoryType, constants.insights.events.player.playbackInterval, insights._playbackIntervalBenchmarkStop(), contextData, playbackSession, video)
     else if state = "stopped"
       jumpKitSendPlaybackIntervalIfNeeded(categoryType, constants.insights.events.player.playbackInterval, insights._playbackIntervalBenchmarkStop(), contextData, playbackSession, video)
+      insights._playbackVariables.isPaused = true
     else if state = "finished"
       jumpKitSendPlaybackIntervalIfNeeded(categoryType, constants.insights.events.player.playbackInterval, insights._playbackIntervalBenchmarkStop(), contextData, playbackSession, video)
+      insights._playbackVariables.isPaused = true
       insights.track(categoryType, constants.insights.events.player.playbackEnded, jumpKitPlayerContext(contextData, playbackSession, video))
     end if
   end if
@@ -1046,4 +1073,82 @@ function jumpKitPlayerContext(contextData as Dynamic, playbackSession as string,
   end if
 
   return eventContextInfo
+end function
+
+' The same functionality as insights._playbackIntervalBenchmarkStop(). It's used for IntervalTask
+' @parameters
+'   playbackStartTime (Integer) - when the playback started
+' @return Integer - Seconds the content was playing
+function taskIntervalStop(playbackStartTime as integer)
+  seconds = 0
+
+  if playbackStartTime > 0
+    date = CreateObject("roDateTime")
+    seconds = date.asSeconds() - playbackStartTime
+  end if
+
+  return seconds
+end function
+
+' The same functionality as jumpKitSendPlaybackIntervalIfNeeded. It's used for IntervalTask
+' @parameters
+'   categoryType - event's category. Expected 10000
+'   eventType - event type. Expected 10006
+'   contextData (Object)
+'   eventContextInformation (Object)
+'   playbackSession (String) - playback id for the content
+'   video (Object) - video player
+sub intervalTaskSendPlaybackIntervalIfNeeded(categoryType, eventType, playbackInterval, contextData as object, eventContextInformation as object, playbackSession as string, video as object)
+  if playbackInterval = 0
+    return
+  end if
+
+  insights = JumpKitInstance().insights
+
+  constants = JumpKitConstants()
+  categoryType = constants.insights.categories.player
+
+  contextData = {
+    "playerInterval": playbackInterval
+  }
+
+  event = eventContextInformation
+  event.playerInfo.append({ "contextData": contextData })
+
+  insights.track(categoryType, constants.insights.events.player.playbackInterval, event)
+end sub
+
+' Listens at node's fields changes
+sub onNodeFieldChange(msg as object)
+  insights = JumpKitInstance().insights
+
+  if msg.getField() = "startTime" and msg.getData() = 0
+    insights._playbackIntervalBenchmarkInit()
+    setNodeField(insights._tracking.intervalTask, "startTime", LCase(Type(insights._tracking.playbackStartTime)), insights._tracking.playbackStartTime, false)
+  end if
+
+end sub
+
+' Adds and sets the passed field to the given node
+' @parameters
+'   node (Dynamic) - roSGNode to which the field is added
+'   fieldName (String) - the name of the field to be added
+'   fieldType (String) - the type of the field to be added. It must be lowecase or the field will not be added
+'   fieldValue (Dynamic) - the updated value for the field
+'   notify (Boolean) -  specifies whether observers of the field are triggered when the field value is updated to
+'                       the same or new value (true), or only when the field changes to a new value (false)
+' @return Boolean - Success: if adding and setting works correctly, Failure: if adding or setting doesn't work correctly
+
+function setNodeField(node as dynamic, fieldName as string, fieldType as string, fieldValue as dynamic, notify as boolean) as boolean
+
+  if node.addfield(fieldName, fieldType, notify)
+    if node.setfield(fieldName, fieldValue)
+      return true
+    else
+      return false
+    end if
+  else
+    return false
+  end if
+
 end function
