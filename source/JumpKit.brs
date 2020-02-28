@@ -26,7 +26,7 @@ function JumpKitLogger() as object
   return logger
 end function
 
-function JumpKitShemas() as Object
+function JumpKitShemas() as object
   schemas = {}
 
   schemas.userInfo = {
@@ -36,7 +36,7 @@ function JumpKitShemas() as Object
         name: "userId", required: false, type: "string"
       }
       {
-        name: "userType", required: true, type: "string", options: {"anonymous": 0, "registered user": 0, "mvpd": 0}
+        name: "userType", required: true, type: "string", options: { "anonymous": 0, "registered user": 0, "mvpd": 0 }
       }
       {
         name: "userBirthDate", required: false, type: "string"
@@ -107,7 +107,7 @@ function JumpKitShemas() as Object
                 name: "subcategoryName", required: true, type: "string"
               }
             ]
-          }  
+          }
         ]
       }
       {
@@ -137,16 +137,19 @@ function JumpKitShemas() as Object
       {
         name: "contentId", required: true, type: "string"
       }
-			{
+      {
         name: "currentTime", required: true, type: "integer"
       }
-			{
+      {
         name: "totalTime", required: true, type: "integer"
       }
-			{
+      {
         name: "playerType", required: true, type: "integer"
       }
-			{
+      {
+        name: "subscriptionPackageId", required: false, type: "string"
+      }
+      {
         name: "contextData", required: false, type: "object", fields: [
           {
             name: "playerInterval", required: false, type: "integer"
@@ -162,6 +165,15 @@ function JumpKitShemas() as Object
     ]
   }
 
+  schemas.recommendationEffectivenessInfo = {
+    name: "recommendationEffectivenessInfo", required: false, type: "object",
+    fields: [
+      {
+        name: "contentId", required: true, type: "string",
+        name: "playbackSession", required: true, type: "string"
+      }
+    ]
+  }
   return schemas
 end function
 
@@ -182,7 +194,7 @@ function JumpKitSchemaCheck(schema as object, event as object, root as boolean) 
     if event[schema.name] = invalid
       return "the field '" + schema.name + "' is required"
     end if
-    
+
     if validatorTypes["is" + schema.type](event) = false
       return "the field '" + schema.name + "' must be of type '" + schema.type + "' and not of type '" + LCase(type(event)) + "'"
     end if
@@ -269,7 +281,7 @@ function JumpKitSchemaValidatorFunctions() as object
   return validator
 end function
 
-function JumpKitConstants() as Object
+function JumpKitConstants() as object
   insights = {
     "eventTypes": {
       "manual": 0,
@@ -300,7 +312,9 @@ function JumpKitConstants() as Object
       ' Error category. (Emitted in case SDK internal inconsistency)
       "error": 11000,
       ' Search related category.
-      "search": 12000
+      "search": 12000,
+      ' Recommendation effectivenes related category
+      "recommendationEffectiveness": 14000
     },
     "events": {
       ' User event type.
@@ -445,6 +459,16 @@ function JumpKitConstants() as Object
         "searchedContent": 12001,
         ' Search result item clicked event
         "searchResultClicked": 12002
+      },
+
+      ' Recommendation effectivenes event types
+      "recommendationEffectiveness": {
+        ' Impressed recommendation
+        "impressed": 14001,
+        ' Clicked recommendation
+        "clicked": 14002,
+        ' Played recommendation
+        "played": 14003
       }
     },
     "user": {
@@ -490,11 +514,11 @@ function JumpKitUtilities()
     timeZoneOffset: function() as longinteger
       date = CreateObject("roDateTime")
       seconds = date.GetTimeZoneOffset() * 60 * 1000
-      seconds = -seconds
+      seconds = - seconds
 
       return seconds
     end function
-    
+
     unixTime: function() as longinteger
       time = CreateObject("roDateTime")
 
@@ -534,11 +558,11 @@ function JumpKitStorage()
     APP_KEY: "appKey",
     DEBUG_MODE: "debugMode"
   }
-  
+
   storage.bucket = CreateObject("roRegistrySection", storage.keys.STORAGE_NAME)
   storage.InsightsEventsBucket = CreateObject("roRegistrySection", storage.keys.STORAGE_INSIGHTS_NAME)
 
-  storage.add = function(key as String, value as String) as Boolean
+  storage.add = function(key as string, value as string) as boolean
     return m.bucket.Write(key, value)
   end function
 
@@ -554,7 +578,7 @@ function JumpKitStorage()
     return m.bucket.Exists(key)
   end function
 
-  storage.getInsightsEvents = function() as Object
+  storage.getInsightsEvents = function() as object
     eventsKeys = m.InsightsEventsBucket.GetKeyList()
     events = []
 
@@ -566,13 +590,13 @@ function JumpKitStorage()
     return events
   end function
 
-  storage.addInsightsEvent = function(event as Object) as Boolean
+  storage.addInsightsEvent = function(event as object) as boolean
     eventJson = FormatJSON(event)
     key = StrI(event.metadata.dateTime)
     return m.InsightsEventsBucket.Write(key, eventJson)
   end function
 
-  storage.cleanInsightsEvents = sub(events as Object)
+  storage.cleanInsightsEvents = sub(events as object)
     for each event in events
       eventKey = StrI(event.metadata.dateTime)
       m.InsightsEventsBucket.Delete(eventKey)
@@ -582,14 +606,14 @@ function JumpKitStorage()
   return storage
 end function
 
-function JumpKitInstance() as Object
+function JumpKitInstance() as object
   if (getGlobalAA().jumpKitInstance = invalid) then
     print "[JumpKit][Error] JumpKitInstance() called prior to JumpKit()"
   end if
   return getGlobalAA().jumpKitInstance
 end function
 
-function JumpKit() as Object
+function JumpKit() as object
   if (getGlobalAA().jumpKitInstance <> invalid) then
     instance = JumpKitInstance()
     ' instance._internal.logger.debug("Reuse the instance of JumpKit")
@@ -665,7 +689,7 @@ function JumpKit() as Object
     end if
 
     insights = {}
-    insights.schemas = function(categoryType as Integer, eventType as integer)
+    insights.schemas = function(categoryType as integer, eventType as integer)
       constants = JumpKitConstants()
       insights = constants.insights
       categories = insights.categories
@@ -682,7 +706,7 @@ function JumpKit() as Object
       internal = JumpKitInstance()._internal
 
       internal.logger.info("Welcome Jump Kit SDK V" + internal.config.version)
-      
+
       internal.config.appKey = appKey
 
       if Len(internal.storage.get(internal.storage.keys.APP_KEY)) = 0
@@ -692,9 +716,9 @@ function JumpKit() as Object
       end if
 
       internal.storage.add(internal.storage.keys.APP_KEY, appKey)
-    End Sub
+    end sub
 
-    getInstallationId: function() as Dynamic
+    getInstallationId: function() as dynamic
       storage = JumpKitInstance()._internal.storage
       return storage.get(storage.keys.INSTALLATION_ID)
     end function
@@ -742,7 +766,7 @@ function JumpKit() as Object
           date = CreateObject("roDateTime")
           seconds = date.asSeconds() - m._tracking.playbackStartTime
         end if
-        
+
         m._tracking.playbackStartTime = 0
 
         return seconds
@@ -799,8 +823,8 @@ function JumpKit() as Object
         return false
       end function
 
-      track: Function(categoryType as Integer, eventType as Integer, eventContextInformation as Object)
-      
+      track: function(categoryType as integer, eventType as integer, eventContextInformation as object)
+
         internal = JumpKitInstance()._internal
         constants = JumpKitConstants()
 
@@ -822,14 +846,14 @@ function JumpKit() as Object
         }
 
         internal.logger.info("Track Event category type:" + StrI(categoryType) + " event type:" + StrI(eventType) + " event:" + FormatJSON(eventToSend))
-        
+
         return internal.storage.addInsightsEvent(eventToSend)
-      End Function
+      end function
 
 
       setContent: sub(contentInfo as object)
         contentInfoSchema = JumpKitShemas().contentInfo
-        
+
         checkResult = JumpKitSchemaCheck(contentInfoSchema, contentInfo, false)
         if Len(checkResult) = 0
           m._contentInfo = contentInfo
@@ -849,7 +873,7 @@ function JumpKit() as Object
         m.track(event)
       end sub
 
-      setVideoPlayer: sub(videoPlayer as Dynamic)
+      setVideoPlayer: sub(videoPlayer as dynamic)
 
         if videoPlayer = invalid
 
@@ -889,7 +913,7 @@ function JumpKit() as Object
       end sub
     }
   }
-  
+
   internalApi = {
     models: {
       "deviceInfo": function() as object
@@ -925,11 +949,11 @@ function JumpKit() as Object
     config.appKey = storage.get(storage.keys.APP_KEY)
 
     userInfoString = storage.get(storage.keys.INSIGHTS_USER_INFO)
-  
+
     if Len(userInfoString) > 0
       public.insights._userInfo = ParseJson(userInfoString)
     end if
-    
+
     config.debugMode = storage.get(storage.keys.DEBUG_MODE)
   else
     storage.destroy(storage.keys.APP_KEY)
@@ -993,6 +1017,13 @@ sub jumpKitPlayerOnStateChange()
         insights._tracking.intervalTask.observeField("startTime", "onNodeFieldChange") ' notified when node's task change playback start time
 
         insights.track(categoryType, eventType, eventContextInformation)
+
+        ' it will always generate this event. It can be commented
+        recommendationInfo = jumpKitRecommendationEffectivenessContext(insights._contentInfo.contentId, playbackSession)
+        insights.track(constants.insights.categories.recommendationEffectiveness, constants.insights.events.recommendationEffectiveness.played, recommendationInfo)
+
+      else
+        return
       end if
 
       ' Update node fields that changes according the reproduction
@@ -1054,7 +1085,20 @@ function jumpKitPlayerTimeshiftContext(timeshift as integer, contextData as obje
   return eventContextInfo
 end function
 
-function jumpKitPlayerContext(contextData as Dynamic, playbackSession as string, video as object) as object
+function jumpKitRecommendationEffectivenessContext(contentId as string, playbackSession as string) as object
+
+  insights = JumpKitInstance().insights
+
+  eventContextInfo = {
+    "recommendationEffectivenessInfo": {
+      "contentId": contentId
+      "playbackSession": playbacksession
+    }
+  }
+  return eventContextInfo
+end function
+
+function jumpKitPlayerContext(contextData as dynamic, playbackSession as string, video as object) as object
   insights = JumpKitInstance().insights
 
   eventContextInfo = {
