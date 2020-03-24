@@ -911,6 +911,10 @@ function JumpKit() as object
         m.currentVideoPlayer = videoPlayer
         m._tracking.playbackSession = roDeviceInfo.getRandomUUID()
       end sub
+
+      setRecommendationEffectivenessEventType: sub(recommendationType as Integer)
+        m.recommendationEffectivenessEventType = recommendationType
+      end sub
     }
   }
 
@@ -1018,10 +1022,11 @@ sub jumpKitPlayerOnStateChange()
 
         insights.track(categoryType, eventType, eventContextInformation)
 
-        ' it will always generate this event. It can be commented
-        recommendationInfo = jumpKitRecommendationEffectivenessContext(insights._contentInfo.contentId, playbackSession)
-        insights.track(constants.insights.categories.recommendationEffectiveness, constants.insights.events.recommendationEffectiveness.played, recommendationInfo)
-
+        if insights.recommendationEffectivenessEventType <> invalid
+          recommendationInfo = jumpKitRecommendationEffectivenessContext(insights._contentInfo.contentId, playbackSession)
+          insights.track(constants.insights.categories.recommendationEffectiveness, insights.recommendationEffectivenessEventType, recommendationInfo)
+        end if
+        
       else
         return
       end if
