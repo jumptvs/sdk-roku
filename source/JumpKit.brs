@@ -887,7 +887,11 @@ function JumpKit() as object
 
             contextData = invalid
 
-            setNodeField(m._tracking.intervalTask, "control", "string", "stop", false) ' stop interval task
+            ' this object is created only if the playback has started
+            if m._tracking.reportedPlaybackStarted = true
+              setNodeField(m._tracking.intervalTask, "control", "string", "stop", false) ' stop interval task
+            end if
+
             jumpKitSendPlaybackIntervalIfNeeded(constants.insights.categories.player, constants.insights.events.player.playbackInterval, m._playbackIntervalBenchmarkStop(), contextData, m._tracking.playbackSession, m.currentVideoPlayer)
             m.track(constants.insights.categories.player, constants.insights.events.player.playerExit, contextInformation)
 
@@ -985,6 +989,11 @@ sub jumpKitPlayerOnStateChange()
     internal.logger.debug("[VideoPlayer] state -> " + state)
 
     if state = "buffering"
+      ' Creating field reportedPlaybackStarted here in case it's neccessary use it before playback starts
+      if insights._tracking.reportedPlaybackStarted = invalid
+        insights._tracking.reportedPlaybackStarted = false
+      end if
+
       insights._tracking.hasBecomeBuffering = true
       insights._playbackBufferingBenchmarkInit()
     else if state = "playing"
@@ -1186,18 +1195,45 @@ end sub
 '   fieldValue (Dynamic) - the updated value for the field
 '   notify (Boolean) -  specifies whether observers of the field are triggered when the field value is updated to
 '                       the same or new value (true), or only when the field changes to a new value (false)
-' @return Boolean - Success: if adding and setting works correctly, Failure: if adding or setting doesn't work correctly
+' @return Boolean - Success: if adding and setting works correctly, Failure: if adding or setting doesn't work correctly. It can
+'                   return false if a dynamic/object parameter is invalid
 
 function setNodeField(node as dynamic, fieldName as string, fieldType as string, fieldValue as dynamic, notify as boolean) as boolean
+  logger = JumpKitLogger()
+  response = areParametersValid([node, fieldValue])
+
+  if response <> -1
+    logger.error("Couldn't set node field '"+fieldName+"'")
+    logger.error("Dynamic/Object parameter ("+StrI(response + 1)+") on setNodeField() is invalid")
+    return false
+  end if
 
   if node.addfield(fieldName, fieldType, notify)
     if node.setfield(fieldName, fieldValue)
       return true
     else
+      logger.error("Couldn't set node field '"+fieldName+"'")
       return false
     end if
   else
+    logger.error("Couldn't set node field '"+fieldName+"'")
     return false
   end if
 
+end function
+
+' Check if the parameters passed in the array are valid
+' @parameters
+'   parameters (roArray) - Array with parameters to check if are valid
+' @return Integer - If returned value is -1 all the parameters are valid. If not returns the position in the array
+'                   of the invalid value
+function areParametersValid(parameters as object) as integer
+
+  for i = 0 to parameters.count() - 1 step 1
+    if parameters[i] = invalid then
+      return i
+    end if
+  end for
+
+  return -1
 end function
