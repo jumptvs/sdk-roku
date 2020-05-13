@@ -1012,7 +1012,7 @@ sub jumpKitPlayerOnStateChange()
       insights._playbackIntervalBenchmarkInit()
       insights._playbackVariables.isPaused = false
 
-      if insights._tracking.reportedPlaybackStarted = invalid then
+      if insights._tracking.reportedPlaybackStarted = invalid or insights._tracking.reportedPlaybackStarted = false then
 
         insights._tracking.reportedPlaybackStarted = true
 
